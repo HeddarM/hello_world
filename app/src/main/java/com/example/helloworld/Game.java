@@ -5,14 +5,14 @@ import java.util.Vector;
 
 public class Game implements Serializable {
 
-    public static class Stack extends java.util.Stack<Cartes> {}
-    public static class Deck extends java.util.Stack<Cartes> {}
+    public static class Pile extends java.util.Stack<Cartes> {}
+    public static class Colonne extends java.util.Stack<Cartes> {}
 
-    public static final int STACK_COUNT = 4;
-    public static final int DECK_COUNT = 7;
+    public static final int PILE_COUNT = 4;
+    public static final int COLONNE_COUNT = 7;
 
-    public Stack[] stacks = new Stack[STACK_COUNT];
-    public Deck[] decks = new Deck[DECK_COUNT];
+    public Pile[] pile = new Pile[PILE_COUNT];
+    public Colonne[] colonne = new Colonne[COLONNE_COUNT];
     public Vector<Cartes> pioche = new Vector<>();
     public Vector<Cartes> returnedPioche = new Vector<>();
 
@@ -20,77 +20,77 @@ public class Game implements Serializable {
 
         // Step 1 - Toutes les cartes sont instanciées
         for (int i = 1; i <= 13; i++) {
-            pioche.add(new Cartes(Cartes.CardType.CARREAU, i));
-            pioche.add(new Cartes(Cartes.CardType.COEUR, i));
-            pioche.add(new Cartes(Cartes.CardType.PIQUE, i));
-            pioche.add(new Cartes(Cartes.CardType.TREFLE, i));
+            pioche.add(new Cartes(Cartes.CartesType.CARREAU, i));
+            pioche.add(new Cartes(Cartes.CartesType.COEUR, i));
+            pioche.add(new Cartes(Cartes.CartesType.PIQUE, i));
+            pioche.add(new Cartes(Cartes.CartesType.TREFLE, i));
         }
 
         // Step 2 - On mélange les cartes
         for (int round = 0; round < 200; round++) {
             int position = (int) (Math.random() * pioche.size());
-            Cartes removedCard = pioche.elementAt(position);
+            Cartes removedCartes = pioche.elementAt(position);
             pioche.removeElementAt(position);
-            pioche.add(removedCard);
+            pioche.add(removedCartes);
         }
 
-        // Step 3 - On crée les sept decks avec des cartes tirées aléatoirement dans la pioche
-        for (int deckIndex = 0; deckIndex < DECK_COUNT; deckIndex++) {
-            decks[deckIndex] = new Deck();
-            for (int cardIndex = 0; cardIndex < deckIndex + 1; cardIndex++) {
+        // Step 3 - On crée les sept colonnes avec des cartes tirées aléatoirement dans la pioche
+        for (int colonneIndex = 0; colonneIndex < COLONNE_COUNT; colonneIndex++) {
+            colonne[colonneIndex] = new Colonne();
+            for (int cartesIndex = 0; cartesIndex < colonneIndex + 1; cartesIndex++) {
                 int position = (int) (Math.random() * pioche.size());
-                Cartes removedCard = pioche.elementAt(position);
+                Cartes removedCartes = pioche.elementAt(position);
                 pioche.removeElementAt(position);
-                decks[deckIndex].push(removedCard);
-                if (cardIndex == deckIndex) removedCard.setVisible(true);
+                colonne[colonneIndex].push(removedCartes);
+                if (cartesIndex == colonneIndex) removedCartes.setVisible(true);
             }
         }
 
         // Step 4 - On initialise les quatre stacks.
-        for (int stackIndex = 0; stackIndex < STACK_COUNT; stackIndex++) {
-            stacks[stackIndex] = new Stack();
+        for (int colonneIndex = 0; colonneIndex < PILE_COUNT; colonneIndex++) {
+            pile[colonneIndex] = new Pile();
         }
     }
 
-    // Méthode pour vérifier si une carte peut être déplacée dans une pile (stack)
-    public int canMoveCardToStack(Cartes card) {
+    // Méthode pour vérifier si une carte peut être déplacée dans une pile
+    public int canMoveCartesToStack(Cartes cartes) {
         // Si une stack est vide et que la carte est un as
-        if (card.getValeur() == 1) {
-            for (int stackIndex = 0; stackIndex < STACK_COUNT; stackIndex++) {
-                if (this.stacks[stackIndex].isEmpty()) {
-                    return stackIndex;
+        if (cartes.getValeur() == 1) {
+            for (int pileIndex = 0; pileIndex < PILE_COUNT; pileIndex++) {
+                if (this.pile[pileIndex].isEmpty()) {
+                    return pileIndex;
                 }
             }
         }
 
         // Si ce n'est pas un as, peut-on empiler la carte sur une carte de
         // valeur inférieure dans l'une des piles.
-        for (int stackIndex = 0; stackIndex < STACK_COUNT; stackIndex++) {
-            Stack stack = this.stacks[stackIndex];
-            if (!stack.isEmpty()) {
-                if (stack.lastElement().getCouleur() != card.getCouleur()) continue;
-                if (stack.lastElement().getValeur() == card.getValeur() - 1) return stackIndex;
+        for (int pileIndex = 0; pileIndex < PILE_COUNT; pileIndex++) {
+            Pile pile = this.pile[pileIndex];
+            if (!pile.isEmpty()) {
+                if (pile.lastElement().getType() != cartes.getType()) continue;
+                if (pile.lastElement().getValeur() == cartes.getValeur() - 1) return pileIndex;
             }
         }
 
         return -1;
     }
 
-    // Méthode pour vérifier si une carte peut être déplacée dans un deck
-    public int canMoveCardToDeck(Cartes card) {
-        // Si la carte est un roi et qu'un deck est vide, alors OK
-        if (card.getValeur() == 13) {
-            for (int deckIndex = 0; deckIndex < DECK_COUNT; deckIndex++) {
-                if (this.decks[deckIndex].isEmpty()) return deckIndex;
+    // Méthode pour vérifier si une carte peut être déplacée dans une colonne
+    public int canMoveCartesToColonne(Cartes cartes) {
+        // Si la carte est un roi et qu'un colonne est vide, alors OK
+        if (cartes.getValeur() == 13) {
+            for (int colonneIndex = 0; colonneIndex < COLONNE_COUNT; colonneIndex++) {
+                if (this.colonne[colonneIndex].isEmpty()) return colonneIndex;
             }
         }
 
-        // Est-ce que la carte peut être placée sur un deck ?
-        for (int deckIndex = 0; deckIndex < DECK_COUNT; deckIndex++) {
-            Deck deck = this.decks[deckIndex];
-            if (deck.size() > 0) {
-                if (deck.lastElement().getColor() == card.getColor()) continue;
-                if (deck.lastElement().getValeur() == card.getValeur() + 1) return deckIndex;
+        // Est-ce que la carte peut être placée sur une colonne ?
+        for (int colonneIndex = 0; colonneIndex < COLONNE_COUNT; colonneIndex++) {
+            Colonne colonne = this.colonne[colonneIndex];
+            if (colonne.size() > 0) {
+                if (colonne.lastElement().getColor() == cartes.getColor()) continue;
+                if (colonne.lastElement().getValeur() == cartes.getValeur() + 1) return colonneIndex;
             }
         }
 
@@ -99,17 +99,17 @@ public class Game implements Serializable {
 
     // Méthode pour vérifier si la partie est terminée
     public boolean isFinish() {
-        return !stacks[0].isEmpty() && stacks[0].lastElement().getValeur() == 13 &&
-                !stacks[1].isEmpty() && stacks[1].lastElement().getValeur() == 13 &&
-                !stacks[2].isEmpty() && stacks[2].lastElement().getValeur() == 13 &&
-                !stacks[3].isEmpty() && stacks[3].lastElement().getValeur() == 13;
+        return !pile[0].isEmpty() && pile[0].lastElement().getValeur() == 13 &&
+                !pile[1].isEmpty() && pile[1].lastElement().getValeur() == 13 &&
+                !pile[2].isEmpty() && pile[2].lastElement().getValeur() == 13 &&
+                !pile[3].isEmpty() && pile[3].lastElement().getValeur() == 13;
     }
 
     // Méthode pour vérifier si toutes les cartes sont retournées
     public boolean allIsReturned() {
-        for (int i = 0; i < DECK_COUNT; i++) {
-            Deck deck = decks[i];
-            if (deck.size() > 0 && !deck.firstElement().isVisible()) return false;
+        for (int i = 0; i < COLONNE_COUNT; i++) {
+            Colonne colonne = this.colonne[i];
+            if (colonne.size() > 0 && !colonne.firstElement().isVisible()) return false;
         }
         return true;
     }
