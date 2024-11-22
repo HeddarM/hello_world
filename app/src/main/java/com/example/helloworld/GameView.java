@@ -28,9 +28,9 @@ public class GameView extends View {
 
     private Bitmap imgBack;
 
-    private float ColonneWidth;
-    private float ColonneHeight;
-    private float ColonneMargin;
+    private float colonneWidth;
+    private float colonneHeight;
+    private float colonneMargin;
 
     public GameView(Context context) {
         super(context);
@@ -53,13 +53,13 @@ public class GameView extends View {
     protected void onSizeChanged( int width, int height, int oldw, int oldh ) {
         super.onSizeChanged( width, height, oldw, oldh );
 
-        ColonneMargin = width * 0.025f;
-        ColonneWidth = (width - (Game.COLONNE_COUNT + 1) * ColonneMargin) / Game.COLONNE_COUNT;
-        ColonneHeight = ColonneWidth * 1.4f;
+        colonneMargin = width * 0.025f;
+        colonneWidth = (width - (Game.COLONNE_COUNT + 1) * colonneMargin) / Game.COLONNE_COUNT;
+        colonneHeight = colonneWidth * 1.4f;
 
         try {
-            int imageSize = (int) (ColonneWidth * 0.66);
-            int imageLittleSize = (int) (ColonneWidth / 3);
+            int imageSize = (int) (colonneWidth * 0.66);
+            int imageLittleSize = (int) (colonneWidth / 3);
 
 
             imgPique = BitmapFactory.decodeResource(getResources(), R.drawable.pique);
@@ -79,14 +79,58 @@ public class GameView extends View {
             imgCarreau = Bitmap.createScaledBitmap(imgCarreau, imageSize, imageSize, true);
 
             imgBack = BitmapFactory.decodeResource(getResources(), R.drawable.back);
-            imgBack = Bitmap.createScaledBitmap(imgBack, (int) ColonneWidth, (int) ColonneHeight, true);
+            imgBack = Bitmap.createScaledBitmap(imgBack, (int) colonneWidth, (int) colonneHeight, true);
 
         } catch (Exception exception) {
             Log.e("ERROR", "Cannot load card images");
         }
-
-
-}
-
     }
+
+    /**
+     * Calcul de la "bounding box" de la stack spécifiée en paramètre.
+     */
+    private RectF computeStackRect( int index ) {
+        float x = colonneMargin + (colonneWidth + colonneMargin) * index;
+        float y = getHeight() * 0.17f;
+        return new RectF( x, y, x+colonneWidth, y+colonneHeight );
+    }
+
+
+    /**
+     * Calcul de la "bounding box" de la pile retournée associée à la pioche.
+     */
+    private RectF computeReturnedPiocheRect() {
+        float x = colonneMargin + (colonneWidth + colonneMargin) * 5;
+        float y = getHeight() * 0.17f;
+        return new RectF( x, y, x+colonneWidth, y+colonneHeight );
+    }
+
+
+    /**
+     * Calcul de la "bounding box" de la pile découverte associée à la pioche.
+     */
+    private RectF computePiocheRect() {
+        float x = colonneMargin + (colonneWidth + colonneMargin) * 6;
+        float y = getHeight() * 0.17f;
+        return new RectF( x, y, x+colonneWidth, y+colonneHeight );
+    }
+
+
+    /**
+     * Calcul de la "bounding box" du deck spécifié en paramètre.
+     */
+    private RectF computeDeckRect( int index, int cardIndex ) {
+        float x = colonneMargin + (colonneWidth + colonneMargin) * index;
+        float y = getHeight() * 0.30f + cardIndex * computeStepY();
+        return new RectF( x, y, x+colonneWidth, y+colonneHeight );
+    }
+
+
+    /**
+     * Calcul du décalage en y pour toutes les cartes d'un deck.
+     */
+    public float computeStepY() {
+        return ( getHeight()*0.9f - getHeight()*0.3f ) / 17f;
+    }
+}
 
