@@ -4,29 +4,29 @@ import java.io.Serializable;
 
 public class Cartes implements Serializable {
 
-    private CardType type; // Couleur de la carte (Coeur, Carreau, Trèfle, Pique)
+    private CartesType type; // Couleur de la carte (Coeur, Carreau, Trèfle, Pique)
     private int valeur; // Valeur de la carte (1 pour As, 11 pour Valet, etc.)
     private boolean visible; // État de la carte : visible ou retournée
 
     // Constructeur 1 avec état non visible par défaut
-    public Cartes(CardType type, int valeur) {
+    public Cartes(CartesType type, int valeur) {
         this.type = type;
         this.valeur = valeur;
         this.visible = false;
     }
 
     // Constructeur 2 avec possibilité de choisir si la carte est visible ou non
-    public Cartes(CardType type, int valeur, boolean visible) {
+    public Cartes(CartesType type, int valeur, boolean visible) {
         this.setType(this.type);
         this.setValeur(valeur);
         this.setVisible(visible);
     }
 
-    public CardType getType() {
+    public CartesType getType() {
         return type;
     }
 
-    public void setType(CardType type) {
+    public void setType(CartesType type) {
         this.type = type;
     }
 
@@ -78,7 +78,7 @@ public class Cartes implements Serializable {
         return type.toString() + " " + getNom();
     }
 
-    public enum CardType {
+    public enum CartesType {
         COEUR, CARREAU, PIQUE, TREFLE;
     }
 }
