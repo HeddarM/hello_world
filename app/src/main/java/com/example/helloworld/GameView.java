@@ -9,9 +9,13 @@ import android.graphics.Paint;
 import android.graphics.RectF;
 import android.util.AttributeSet;
 import android.util.Log;
+import android.view.GestureDetector;
+import android.view.MotionEvent;
 import android.view.View;
 
-public class GameView extends View {
+import java.util.ArrayList;
+
+public class GameView extends View implements GestureDetector.OnGestureListener {
 
     private int headerBackgroundColor;
     private int headerForegroundColor;
@@ -34,6 +38,8 @@ public class GameView extends View {
     private float colonneHeight;
     private float colonneMargin;
 
+    private GestureDetector gestureDetector;
+
     public GameView(Context context) {
         super(context);
         postConstruct();
@@ -45,6 +51,7 @@ public class GameView extends View {
     }
 
     private void postConstruct() {
+        gestureDetector = new GestureDetector(getContext(), this);
         Resources res = getResources();
         headerBackgroundColor = res.getColor( R.color.colorPrimaryDark );
         headerForegroundColor = res.getColor( R.color.headerForegroundColor );
@@ -52,7 +59,7 @@ public class GameView extends View {
         redColor = res.getColor( R.color.redColor );
     }
 
-    protected void onSizeChanged( int width, int height, int oldw, int oldh ) {
+     protected void onSizeChanged( int width, int height, int oldw, int oldh ) {
         super.onSizeChanged( width, height, oldw, oldh );
 
         colonneMargin = width * 0.025f;
@@ -121,9 +128,9 @@ public class GameView extends View {
     /**
      * Calcul de la "bounding box" du deck spécifié en paramètre.
      */
-    private RectF computeDeckRect( int index, int cardIndex ) {
+    private RectF computeDeckRect( int index, int cartesIndex ) {
         float x = colonneMargin + (colonneWidth + colonneMargin) * index;
-        float y = getHeight() * 0.30f + cardIndex * computeStepY();
+        float y = getHeight() * 0.30f + cartesIndex * computeStepY();
         return new RectF( x, y, x+colonneWidth, y+colonneHeight );
     }
 
@@ -248,19 +255,19 @@ public class GameView extends View {
         paint.setTextAlign( Paint.Align.LEFT );
         paint.setTextSize( getWidth() / 20f );
         paint.setStrokeWidth(1);
-        canvas.drawText( "V 1.0", (int) (widthDiv10 * 0.5), (int) (heightDiv10 * 1.3), paint );
+        canvas.drawText( "V 2.0", (int) (widthDiv10 * 0.5), (int) (heightDiv10 * 1.3), paint );
 
         paint.setTextAlign( Paint.Align.RIGHT );
-        canvas.drawText( "By KooR.fr", (int) (widthDiv10 * 9.5), (int) (heightDiv10 * 1.3), paint );
+        canvas.drawText( "By Mehdi & Redhouane", (int) (widthDiv10 * 9.5), (int) (heightDiv10 * 1.3), paint );
 
 
         // --- Draw the fourth stacks ---
         paint.setStrokeWidth( getWidth() / 200f );
 
         for (int i = 0; i < Game.PILE_COUNT; i++) {
-            Game.Pile stack = game.pile[i];
+            Game.Pile pile = game.pile[i];
             rectF = computeStackRect( i );
-            drawCartes( canvas, stack.isEmpty() ? null : stack.lastElement(), rectF.left, rectF.top );
+            drawCartes( canvas, pile.isEmpty() ? null : pile.lastElement(), rectF.left, rectF.top );
         }
 
         // --- Draw the pioche ---
@@ -288,6 +295,135 @@ public class GameView extends View {
 
         }
     }
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+        return gestureDetector.onTouchEvent(event);     // Le widget repasse la main au GestureDetector.
+    }
+
+    // On réagit à un appui simple sur le widget.
+    @Override
+    public boolean onSingleTapUp(MotionEvent e) {
+
+        RectF rect;
+
+        // --- Un tap sur les cartes non retournées de la pioche ---
+        rect = computePiocheRect();
+        if ( rect.contains( e.getX(), e.getY() ) ) {
+            if ( ! game.pioche.isEmpty() ) {
+                Cartes cartes = game.pioche.remove(0);
+                cartes.setVisible( true );
+                game.returnedPioche.add( cartes );
+            } else {
+                game.pioche.addAll( game.returnedPioche );
+                game.returnedPioche.clear();
+                for( Cartes card : game.pioche ) card.setVisible( false );
+            }
+            postInvalidate();
+            return true;
+        }
+
+        // --- Un tap sur les cartes retournées de la pioche ---
+        rect = computeReturnedPiocheRect();
+        if ( rect.contains( e.getX(), e.getY() ) && ! game.returnedPioche.isEmpty() ) {
+            final int pileIndex = game.canMoveCartesToStack( game.returnedPioche.lastElement() );
+            if ( pileIndex > -1 ) {
+                Cartes selectedCard = game.returnedPioche.remove(game.returnedPioche.size() - 1);
+                game.pile[pileIndex].add( selectedCard );
+                postInvalidate();
+                return true;
+            }
+
+            final int colonneIndex = game.canMoveCartesToColonne( game.returnedPioche.lastElement() );
+            if ( colonneIndex > -1 ) {
+                Cartes selectedCard = game.returnedPioche.remove( game.returnedPioche.size() - 1 );
+                game.colonne[colonneIndex].add( selectedCard );
+                postInvalidate();
+                return true;
+            }
+        }
+
+        // --- Un tap sur une carte d'une deck ---
+        for( int colonneIndex=0; colonneIndex<Game.COLONNE_COUNT; colonneIndex++ ) {
+            final Game.Colonne colonne = game.colonne[colonneIndex];
+            if ( ! colonne.isEmpty() ) {
+                for( int i=colonne.size()-1; i>=0; i-- ) {
+                    rect = computeDeckRect(colonneIndex, i);
+                    if ( rect.contains(e.getX(), e.getY()) ) {
+                        // Click sur carte non retournée de la deck => on sort
+                        Cartes currentCard = colonne.get(i);
+                        if ( ! currentCard.isVisible() ) return true;
+
+                        // Peut-on déplacer la carte du sommet de la deck vers une stack ?
+                        if ( i == colonne.size() - 1 ) {       // On vérifie de bien être sur le sommet
+                            int pile Index = game.canMoveCartesToStack(currentCard);
+                            if (pileIndex > -1) {
+                                Cartes selectedCard = colonne.remove(colonne.size() - 1);
+                                if ( ! colonne.isEmpty() ) colonne.lastElement().setVisible(true);
+                                game.pile[pileIndex].add( selectedCard );
+                                postInvalidate();
+                                return true;
+                            }
+                        }
+
+                        // Peut-on déplacer la carte de la deck vers une autre deck ?
+                        final int colonneIndex2 = game.canMoveCartesToColonne( currentCard );
+                        if (colonneIndex2 > -1) {
+                            if ( i == colonne.size() - 1 ) {
+                                // On déplace qu'un carte
+                                Cartes selectedCard = colonne.remove(colonne.size() - 1);
+                                if ( ! colonne.isEmpty() ) {
+                                    colonne.lastElement().setVisible(true);
+                                }
+                                game.colonne[colonneIndex2].add( selectedCard );
+                            } else {
+                                // On déplace plusieurs cartes
+                                final ArrayList<Cartes> selectedCards = new ArrayList<>();
+                                for( int ci=colonne.size()-1; ci>=i; ci-- ) {
+                                    selectedCards.add( 0, colonne.remove( ci ) );
+                                }
+                                if ( ! colonne.isEmpty() ) {
+                                    colonne.lastElement().setVisible(true);
+                                }
+                                game.colonne[colonneIndex2].addAll( selectedCards );
+                            }
+                            postInvalidate();
+                            return true;
+                        }
+
+                        return true;
+                    }
+                }
+            }
+        }
+
+        return true;
+    }
+
+    @Override
+    public boolean onDown(MotionEvent e) {
+        return true;
+    }
+
+    @Override
+    public void onShowPress(MotionEvent e) {
+
+    }
+
+    @Override
+    public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
+        return false;
+    }
+
+    @Override
+    public void onLongPress(MotionEvent e) {
+
+    }
+
+    @Override
+    public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
+        return false;
+    }
 
 }
+
 
