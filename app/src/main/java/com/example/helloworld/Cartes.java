@@ -55,9 +55,9 @@ public class Cartes implements Serializable {
     public String getNom() {
         switch (this.valeur) {
             case 1: return "As";
-            case 11: return "Valet";
-            case 12: return "Reine";
-            case 13: return "Roi";
+            case 11: return "J";
+            case 12: return "Q";
+            case 13: return "K";
             case 2: case 3: case 4: case 5: case 6: case 7: case 8: case 9: case 10:
                 return String.valueOf(this.valeur);
             default:

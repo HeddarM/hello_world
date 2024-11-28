@@ -255,10 +255,10 @@ public class GameView extends View implements GestureDetector.OnGestureListener 
         paint.setTextAlign( Paint.Align.LEFT );
         paint.setTextSize( getWidth() / 20f );
         paint.setStrokeWidth(1);
-        canvas.drawText( "V 2.0", (int) (widthDiv10 * 0.5), (int) (heightDiv10 * 1.3), paint );
+        canvas.drawText( "SCORE :", (int) (widthDiv10 * 0.5), (int) (heightDiv10 * 1.3), paint );
 
         paint.setTextAlign( Paint.Align.RIGHT );
-        canvas.drawText( "By Mehdi & Redhouane", (int) (widthDiv10 * 9.5), (int) (heightDiv10 * 1.3), paint );
+        canvas.drawText( "TEMPS :", (int) (widthDiv10 * 9.5), (int) (heightDiv10 * 1.3), paint );
 
 
         // --- Draw the fourth stacks ---
@@ -353,9 +353,9 @@ public class GameView extends View implements GestureDetector.OnGestureListener 
                         Cartes currentCard = colonne.get(i);
                         if ( ! currentCard.isVisible() ) return true;
 
-                        // Peut-on déplacer la carte du sommet de la deck vers une stack ?
+                        // Peut-on déplacer la carte du sommet de la colonne vers une pile ?
                         if ( i == colonne.size() - 1 ) {       // On vérifie de bien être sur le sommet
-                            int pile Index = game.canMoveCartesToStack(currentCard);
+                            int pileIndex = game.canMoveCartesToStack(currentCard);
                             if (pileIndex > -1) {
                                 Cartes selectedCard = colonne.remove(colonne.size() - 1);
                                 if ( ! colonne.isEmpty() ) colonne.lastElement().setVisible(true);
@@ -365,11 +365,11 @@ public class GameView extends View implements GestureDetector.OnGestureListener 
                             }
                         }
 
-                        // Peut-on déplacer la carte de la deck vers une autre deck ?
+                        // Peut-on déplacer la carte de la colonne vers une autre colonne ?
                         final int colonneIndex2 = game.canMoveCartesToColonne( currentCard );
                         if (colonneIndex2 > -1) {
                             if ( i == colonne.size() - 1 ) {
-                                // On déplace qu'un carte
+                                // On déplace qu'une carte
                                 Cartes selectedCard = colonne.remove(colonne.size() - 1);
                                 if ( ! colonne.isEmpty() ) {
                                     colonne.lastElement().setVisible(true);
