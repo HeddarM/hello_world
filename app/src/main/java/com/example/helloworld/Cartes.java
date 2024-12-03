@@ -54,7 +54,7 @@ public class Cartes implements Serializable {
 
     public String getNom() {
         switch (this.valeur) {
-            case 1: return "As";
+            case 1: return "A";
             case 11: return "J";
             case 12: return "Q";
             case 13: return "K";

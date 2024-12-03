@@ -14,7 +14,7 @@ public class Game implements Serializable {
     public Pile[] pile = new Pile[PILE_COUNT];
     public Colonne[] colonne = new Colonne[COLONNE_COUNT];
     public Vector<Cartes> pioche = new Vector<>();
-    public Vector<Cartes> returnedPioche = new Vector<>();
+    public Vector<Cartes> Piocheretourne = new Vector<>();
 
     public Game() {
 
@@ -53,7 +53,7 @@ public class Game implements Serializable {
     }
 
     // Méthode pour vérifier si une carte peut être déplacée dans une pile
-    public int canMoveCartesToStack(Cartes cartes) {
+    public int MoveCartesPile(Cartes cartes) {
         // Si une stack est vide et que la carte est un as
         if (cartes.getValeur() == 1) {
             for (int pileIndex = 0; pileIndex < PILE_COUNT; pileIndex++) {
@@ -77,7 +77,7 @@ public class Game implements Serializable {
     }
 
     // Méthode pour vérifier si une carte peut être déplacée dans une colonne
-    public int canMoveCartesToColonne(Cartes cartes) {
+    public int MoveCartesColonne(Cartes cartes) {
         // Si la carte est un roi et qu'un colonne est vide, alors OK
         if (cartes.getValeur() == 13) {
             for (int colonneIndex = 0; colonneIndex < COLONNE_COUNT; colonneIndex++) {

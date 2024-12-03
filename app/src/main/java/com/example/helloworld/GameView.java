@@ -17,10 +17,9 @@ import java.util.ArrayList;
 
 public class GameView extends View implements GestureDetector.OnGestureListener {
 
-    private int headerBackgroundColor;
-    private int headerForegroundColor;
-    private int backgroundColor;
-    private int redColor;
+    private int CouleurTete; // Couleur de l'arrière-plan de l'en-tête
+    private int CouleurFond;       // Couleur de l'arrière-plan général
+    private int CouleurPolice;         // Couleur du texte de l'en-tête
     public Game game = new Game();
 
     private Bitmap imgPique;
@@ -31,12 +30,12 @@ public class GameView extends View implements GestureDetector.OnGestureListener 
     private Bitmap imgCarreauLittle;
     private Bitmap imgCoeur;
     private Bitmap imgCoeurLittle;
-
     private Bitmap imgBack;
+    // (Images similaires pour Treffle, Carreau, Coeur, et imgBack)
 
-    private float colonneWidth;
-    private float colonneHeight;
-    private float colonneMargin;
+    private float colonneWidth;   // Largeur d'une colonne
+    private float colonneHeight;  // Hauteur d'une colonne
+    private float colonneMargin;  // Marge entre deux colonnes
 
     private GestureDetector gestureDetector;
 
@@ -53,10 +52,9 @@ public class GameView extends View implements GestureDetector.OnGestureListener 
     private void postConstruct() {
         gestureDetector = new GestureDetector(getContext(), this);
         Resources res = getResources();
-        headerBackgroundColor = res.getColor( R.color.colorPrimaryDark );
-        headerForegroundColor = res.getColor( R.color.headerForegroundColor );
-        backgroundColor = res.getColor( R.color.backgroundColor );
-        redColor = res.getColor( R.color.redColor );
+        CouleurTete = res.getColor( R.color.white);
+        CouleurFond = res.getColor( R.color.CouleurFond );
+        CouleurPolice = res.getColor( R.color.CouleurPolice );
     }
 
      protected void onSizeChanged( int width, int height, int oldw, int oldh ) {
@@ -91,7 +89,7 @@ public class GameView extends View implements GestureDetector.OnGestureListener 
             imgBack = Bitmap.createScaledBitmap(imgBack, (int) colonneWidth, (int) colonneHeight, true);
 
         } catch (Exception exception) {
-            Log.e("ERROR", "Cannot load card images");
+            Log.e("ERREUR", "Impossible de charger les images");
         }
     }
 
@@ -116,6 +114,7 @@ public class GameView extends View implements GestureDetector.OnGestureListener 
 
 
     /**
+
      * Calcul de la "bounding box" de la pile découverte associée à la pioche.
      */
     private RectF computePiocheRect() {
@@ -232,7 +231,7 @@ public class GameView extends View implements GestureDetector.OnGestureListener 
         super.onDraw(canvas);
 
         // --- Background ---
-        paint.setColor(backgroundColor);
+        paint.setColor(CouleurFond);
         paint.setStyle( Paint.Style.FILL );
         canvas.drawRect(0, 0, getWidth(), getHeight(), paint);
 
@@ -241,26 +240,24 @@ public class GameView extends View implements GestureDetector.OnGestureListener 
         float widthDiv10 = getWidth() / 10f;
         float heightDiv10 = getHeight() / 10f;
 
-        paint.setColor( headerBackgroundColor );
+        paint.setColor(CouleurTete);
         RectF rectF = new RectF(0, 0, getWidth(), getHeight() * 0.15f);
         canvas.drawRect(rectF, paint);
 
-        paint.setColor(redColor);
+        paint.setColor(CouleurPolice);
         paint.setTextAlign( Paint.Align.CENTER );
         paint.setTextSize( (int) (getWidth() / 8.5) );
         canvas.drawText( getResources().getString(R.string.app_name),
                 widthDiv10 * 5, (int) (heightDiv10 * 0.8), paint );
 
-        paint.setColor( headerForegroundColor );
+        paint.setColor( CouleurPolice );
         paint.setTextAlign( Paint.Align.LEFT );
         paint.setTextSize( getWidth() / 20f );
         paint.setStrokeWidth(1);
         canvas.drawText( "SCORE :", (int) (widthDiv10 * 0.5), (int) (heightDiv10 * 1.3), paint );
 
         paint.setTextAlign( Paint.Align.RIGHT );
-        canvas.drawText( "TEMPS :", (int) (widthDiv10 * 9.5), (int) (heightDiv10 * 1.3), paint );
-
-
+        canvas.drawText( "TEMPS : ", (int) (widthDiv10 * 9.5), (int) (heightDiv10 * 1.3), paint );
         // --- Draw the fourth stacks ---
         paint.setStrokeWidth( getWidth() / 200f );
 
@@ -272,7 +269,7 @@ public class GameView extends View implements GestureDetector.OnGestureListener 
 
         // --- Draw the pioche ---
         rectF = computeReturnedPiocheRect();
-        drawCartes( canvas, game.returnedPioche.isEmpty() ? null : game.returnedPioche.lastElement(),
+        drawCartes( canvas, game.Piocheretourne.isEmpty() ? null : game.Piocheretourne.lastElement(),
                 rectF.left, rectF.top );
 
         rectF = computePiocheRect();
@@ -303,7 +300,6 @@ public class GameView extends View implements GestureDetector.OnGestureListener 
     // On réagit à un appui simple sur le widget.
     @Override
     public boolean onSingleTapUp(MotionEvent e) {
-
         RectF rect;
 
         // --- Un tap sur les cartes non retournées de la pioche ---
@@ -312,10 +308,10 @@ public class GameView extends View implements GestureDetector.OnGestureListener 
             if ( ! game.pioche.isEmpty() ) {
                 Cartes cartes = game.pioche.remove(0);
                 cartes.setVisible( true );
-                game.returnedPioche.add( cartes );
+                game.Piocheretourne.add( cartes );
             } else {
-                game.pioche.addAll( game.returnedPioche );
-                game.returnedPioche.clear();
+                game.pioche.addAll( game.Piocheretourne);
+                game.Piocheretourne.clear();
                 for( Cartes card : game.pioche ) card.setVisible( false );
             }
             postInvalidate();
@@ -324,18 +320,18 @@ public class GameView extends View implements GestureDetector.OnGestureListener 
 
         // --- Un tap sur les cartes retournées de la pioche ---
         rect = computeReturnedPiocheRect();
-        if ( rect.contains( e.getX(), e.getY() ) && ! game.returnedPioche.isEmpty() ) {
-            final int pileIndex = game.canMoveCartesToStack( game.returnedPioche.lastElement() );
+        if ( rect.contains( e.getX(), e.getY() ) && ! game.Piocheretourne.isEmpty() ) {
+            final int pileIndex = game.MoveCartesPile( game.Piocheretourne.lastElement() );
             if ( pileIndex > -1 ) {
-                Cartes selectedCard = game.returnedPioche.remove(game.returnedPioche.size() - 1);
+                Cartes selectedCard = game.Piocheretourne.remove(game.Piocheretourne.size() - 1);
                 game.pile[pileIndex].add( selectedCard );
                 postInvalidate();
                 return true;
             }
 
-            final int colonneIndex = game.canMoveCartesToColonne( game.returnedPioche.lastElement() );
+            final int colonneIndex = game.MoveCartesColonne( game.Piocheretourne.lastElement() );
             if ( colonneIndex > -1 ) {
-                Cartes selectedCard = game.returnedPioche.remove( game.returnedPioche.size() - 1 );
+                Cartes selectedCard = game.Piocheretourne.remove( game.Piocheretourne.size() - 1 );
                 game.colonne[colonneIndex].add( selectedCard );
                 postInvalidate();
                 return true;
@@ -355,7 +351,7 @@ public class GameView extends View implements GestureDetector.OnGestureListener 
 
                         // Peut-on déplacer la carte du sommet de la colonne vers une pile ?
                         if ( i == colonne.size() - 1 ) {       // On vérifie de bien être sur le sommet
-                            int pileIndex = game.canMoveCartesToStack(currentCard);
+                            int pileIndex = game.MoveCartesPile(currentCard);
                             if (pileIndex > -1) {
                                 Cartes selectedCard = colonne.remove(colonne.size() - 1);
                                 if ( ! colonne.isEmpty() ) colonne.lastElement().setVisible(true);
@@ -366,7 +362,7 @@ public class GameView extends View implements GestureDetector.OnGestureListener 
                         }
 
                         // Peut-on déplacer la carte de la colonne vers une autre colonne ?
-                        final int colonneIndex2 = game.canMoveCartesToColonne( currentCard );
+                        final int colonneIndex2 = game.MoveCartesColonne( currentCard );
                         if (colonneIndex2 > -1) {
                             if ( i == colonne.size() - 1 ) {
                                 // On déplace qu'une carte

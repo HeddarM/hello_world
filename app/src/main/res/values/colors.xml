@@ -12,9 +12,9 @@
     <color name="colorPrimaryDark">#000000</color>
     <color name="colorAccent">#e61408</color>
 
-    <!-- Les couleurs utilisées par l'application -->
-    <color name="headerForegroundColor">#e0e0e0</color>
-    <color name="backgroundColor">#026a15</color>
-    <color name="redColor">#e61408</color>
+    <!-- Les couleurs utilisées pourr l'application -->
+    <color name="headerForegroundColor">#FFD700</color>
+    <color name="CouleurFond">#87CEEB</color>
+    <color name="CouleurPolice">#FFD700</color>
 </resources>
 
