@@ -26,6 +26,7 @@ public class GameView extends View implements GestureDetector.OnGestureListener 
     private boolean compteurEnCours;  // Indicateur si le compteur tourne
     private Handler gestionnaireTemps; // Gère la mise à jour du compteur
     private Runnable tacheTemps;      // Définit l'action répétée
+    private int compteurCoups = 0; // Compteur pour le nombre de coups réalisés
     public Game game = new Game();
 
     private Bitmap imgPique;
@@ -286,7 +287,7 @@ public class GameView extends View implements GestureDetector.OnGestureListener 
         paint.setTextAlign( Paint.Align.LEFT );
         paint.setTextSize( getWidth() / 20f );
         paint.setStrokeWidth(1);
-        canvas.drawText( "SCORE :", (int) (widthDiv10 * 0.5), (int) (heightDiv10 * 1.3), paint );
+        canvas.drawText( "Coups : " + compteurCoups, (int) (widthDiv10 * 0.5), (int) (heightDiv10 * 1.3), paint );
 
         paint.setColor(CouleurPolice);
         paint.setTextAlign(Paint.Align.RIGHT);
@@ -347,10 +348,12 @@ public class GameView extends View implements GestureDetector.OnGestureListener 
                 Cartes cartes = game.pioche.remove(0);
                 cartes.setVisible( true );
                 game.Piocheretourne.add( cartes );
+                compteurCoups++; // Incrémentation du compteur
             } else {
                 game.pioche.addAll( game.Piocheretourne);
                 game.Piocheretourne.clear();
                 for( Cartes card : game.pioche ) card.setVisible( false );
+                compteurCoups++; // Incrémentation du compteur
             }
             postInvalidate();
             return true;
@@ -363,6 +366,7 @@ public class GameView extends View implements GestureDetector.OnGestureListener 
             if ( pileIndex > -1 ) {
                 Cartes selectedCard = game.Piocheretourne.remove(game.Piocheretourne.size() - 1);
                 game.pile[pileIndex].add( selectedCard );
+                compteurCoups++; // Incrémentation du compteur
                 postInvalidate();
                 return true;
             }
@@ -371,6 +375,7 @@ public class GameView extends View implements GestureDetector.OnGestureListener 
             if ( colonneIndex > -1 ) {
                 Cartes selectedCard = game.Piocheretourne.remove( game.Piocheretourne.size() - 1 );
                 game.colonne[colonneIndex].add( selectedCard );
+                compteurCoups++; // Incrémentation du compteur
                 postInvalidate();
                 return true;
             }
@@ -394,6 +399,7 @@ public class GameView extends View implements GestureDetector.OnGestureListener 
                                 Cartes selectedCard = colonne.remove(colonne.size() - 1);
                                 if ( ! colonne.isEmpty() ) colonne.lastElement().setVisible(true);
                                 game.pile[pileIndex].add( selectedCard );
+                                compteurCoups++; // Incrémentation du compteur de coups
                                 postInvalidate();
                                 return true;
                             }
@@ -409,6 +415,7 @@ public class GameView extends View implements GestureDetector.OnGestureListener 
                                     colonne.lastElement().setVisible(true);
                                 }
                                 game.colonne[colonneIndex2].add( selectedCard );
+                                compteurCoups++; // Incrémentation du compteur de coups
                             } else {
                                 // On déplace plusieurs cartes
                                 final ArrayList<Cartes> selectedCards = new ArrayList<>();
@@ -419,6 +426,7 @@ public class GameView extends View implements GestureDetector.OnGestureListener 
                                     colonne.lastElement().setVisible(true);
                                 }
                                 game.colonne[colonneIndex2].addAll( selectedCards );
+                                compteurCoups++; // Incrémentation du compteur de coups
                             }
                             postInvalidate();
                             return true;
