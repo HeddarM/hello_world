@@ -7,6 +7,7 @@ import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.RectF;
+import android.os.Handler;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.GestureDetector;
@@ -20,16 +21,21 @@ public class GameView extends View implements GestureDetector.OnGestureListener 
     private int CouleurTete; // Couleur de l'arrière-plan de l'en-tête
     private int CouleurFond;       // Couleur de l'arrière-plan général
     private int CouleurPolice;         // Couleur du texte de l'en-tête
+    private long tempsDebut;          // Temps de départ en millisecondes
+    private long tempsEcoule;         // Temps écoulé en millisecondes
+    private boolean compteurEnCours;  // Indicateur si le compteur tourne
+    private Handler gestionnaireTemps; // Gère la mise à jour du compteur
+    private Runnable tacheTemps;      // Définit l'action répétée
     public Game game = new Game();
 
     private Bitmap imgPique;
-    private Bitmap imgPiqueLittle;
     private Bitmap imgTreffle;
-    private Bitmap imgTreffleLittle;
     private Bitmap imgCarreau;
-    private Bitmap imgCarreauLittle;
     private Bitmap imgCoeur;
-    private Bitmap imgCoeurLittle;
+    private Bitmap imgPiqueMini;
+    private Bitmap imgTreffleMini;
+    private Bitmap imgCoeurMini;
+    private Bitmap imgCarreauMini;
     private Bitmap imgBack;
     // (Images similaires pour Treffle, Carreau, Coeur, et imgBack)
 
@@ -42,11 +48,13 @@ public class GameView extends View implements GestureDetector.OnGestureListener 
     public GameView(Context context) {
         super(context);
         postConstruct();
+        demarrerCompteur();
     }
 
     public GameView(Context context, AttributeSet attrs) {
         super(context, attrs);
         postConstruct();
+        demarrerCompteur();
     }
 
     private void postConstruct() {
@@ -55,7 +63,31 @@ public class GameView extends View implements GestureDetector.OnGestureListener 
         CouleurTete = res.getColor( R.color.white);
         CouleurFond = res.getColor( R.color.CouleurFond );
         CouleurPolice = res.getColor( R.color.CouleurPolice );
+        gestionnaireTemps = new Handler();
+        tacheTemps = new Runnable() {
+            @Override
+            public void run() {
+                if (compteurEnCours) {
+                    tempsEcoule = System.currentTimeMillis() - tempsDebut;
+                    invalidate(); // Redessine l'écran pour afficher le temps mis à jour
+                    gestionnaireTemps.postDelayed(this, 1000); // Mise à jour toutes les secondes
+                }
+            }
+        };
+        compteurEnCours = false;
     }
+
+    public void demarrerCompteur() {
+        tempsDebut = System.currentTimeMillis();
+        compteurEnCours = true;
+        gestionnaireTemps.post(tacheTemps); // Lance le compteur
+    }
+
+    public void arreterCompteur() {
+        compteurEnCours = false;
+        gestionnaireTemps.removeCallbacks(tacheTemps); // Arrête les mises à jour
+    }
+
 
      protected void onSizeChanged( int width, int height, int oldw, int oldh ) {
         super.onSizeChanged( width, height, oldw, oldh );
@@ -65,25 +97,25 @@ public class GameView extends View implements GestureDetector.OnGestureListener 
         colonneHeight = colonneWidth * 1.4f;
 
         try {
-            int imageSize = (int) (colonneWidth * 0.66);
-            int imageLittleSize = (int) (colonneWidth / 3);
+            int tailleImage = (int) (colonneWidth * 0.66);
+            int tailleImageMini = (int) (colonneWidth / 3);
 
 
             imgPique = BitmapFactory.decodeResource(getResources(), R.drawable.pique);
-            imgPiqueLittle = Bitmap.createScaledBitmap(imgPique, imageLittleSize, imageLittleSize, true);
-            imgPique = Bitmap.createScaledBitmap(imgPique, imageSize, imageSize, true);
+            imgPiqueMini = Bitmap.createScaledBitmap(imgPique, tailleImageMini, tailleImageMini, true);
+            imgPique = Bitmap.createScaledBitmap(imgPique, tailleImage, tailleImage, true);
 
             imgTreffle = BitmapFactory.decodeResource(getResources(), R.drawable.treffle);
-            imgTreffleLittle = Bitmap.createScaledBitmap(imgTreffle, imageLittleSize, imageLittleSize, true);
-            imgTreffle = Bitmap.createScaledBitmap(imgTreffle, imageSize, imageSize, true);
+            imgTreffleMini = Bitmap.createScaledBitmap(imgTreffle, tailleImageMini, tailleImageMini, true);
+            imgTreffle = Bitmap.createScaledBitmap(imgTreffle, tailleImage, tailleImage, true);
 
             imgCoeur = BitmapFactory.decodeResource(getResources(), R.drawable.coeur);
-            imgCoeurLittle = Bitmap.createScaledBitmap(imgCoeur, imageLittleSize, imageLittleSize, true);
-            imgCoeur = Bitmap.createScaledBitmap(imgCoeur, imageSize, imageSize, true);
+            imgCoeurMini = Bitmap.createScaledBitmap(imgCoeur, tailleImageMini, tailleImageMini, true);
+            imgCoeur = Bitmap.createScaledBitmap(imgCoeur, tailleImage, tailleImage, true);
 
             imgCarreau = BitmapFactory.decodeResource(getResources(), R.drawable.carreau);
-            imgCarreauLittle = Bitmap.createScaledBitmap(imgCarreau, imageLittleSize, imageLittleSize, true);
-            imgCarreau = Bitmap.createScaledBitmap(imgCarreau, imageSize, imageSize, true);
+            imgCarreauMini = Bitmap.createScaledBitmap(imgCarreau, tailleImageMini, tailleImageMini, true);
+            imgCarreau = Bitmap.createScaledBitmap(imgCarreau, tailleImage, tailleImage, true);
 
             imgBack = BitmapFactory.decodeResource(getResources(), R.drawable.back);
             imgBack = Bitmap.createScaledBitmap(imgBack, (int) colonneWidth, (int) colonneHeight, true);
@@ -96,7 +128,7 @@ public class GameView extends View implements GestureDetector.OnGestureListener 
     /**
      * Calcul de la "bounding box" de la stack spécifiée en paramètre.
      */
-    private RectF computeStackRect( int index ) {
+    private RectF calcRectPile(int index ) {
         float x = colonneMargin + (colonneWidth + colonneMargin) * index;
         float y = getHeight() * 0.17f;
         return new RectF( x, y, x+colonneWidth, y+colonneHeight );
@@ -106,7 +138,7 @@ public class GameView extends View implements GestureDetector.OnGestureListener 
     /**
      * Calcul de la "bounding box" de la pile retournée associée à la pioche.
      */
-    private RectF computeReturnedPiocheRect() {
+    private RectF calcRectPiocheRet() {
         float x = colonneMargin + (colonneWidth + colonneMargin) * 5;
         float y = getHeight() * 0.17f;
         return new RectF( x, y, x+colonneWidth, y+colonneHeight );
@@ -117,7 +149,7 @@ public class GameView extends View implements GestureDetector.OnGestureListener 
 
      * Calcul de la "bounding box" de la pile découverte associée à la pioche.
      */
-    private RectF computePiocheRect() {
+    private RectF calcRectPiocheVis() {
         float x = colonneMargin + (colonneWidth + colonneMargin) * 6;
         float y = getHeight() * 0.17f;
         return new RectF( x, y, x+colonneWidth, y+colonneHeight );
@@ -127,9 +159,9 @@ public class GameView extends View implements GestureDetector.OnGestureListener 
     /**
      * Calcul de la "bounding box" du deck spécifié en paramètre.
      */
-    private RectF computeDeckRect( int index, int cartesIndex ) {
+    private RectF calcRectColonne(int index, int cartesIndex ) {
         float x = colonneMargin + (colonneWidth + colonneMargin) * index;
-        float y = getHeight() * 0.30f + cartesIndex * computeStepY();
+        float y = getHeight() * 0.30f + cartesIndex * calcDecalY();
         return new RectF( x, y, x+colonneWidth, y+colonneHeight );
     }
 
@@ -137,7 +169,7 @@ public class GameView extends View implements GestureDetector.OnGestureListener 
     /**
      * Calcul du décalage en y pour toutes les cartes d'un deck.
      */
-    public float computeStepY() {
+    public float calcDecalY() {
         return ( getHeight()*0.9f - getHeight()*0.3f ) / 17f;
     }
 
@@ -152,7 +184,7 @@ public class GameView extends View implements GestureDetector.OnGestureListener 
      * @param x La position en x de tracé.
      * @param y La position en y de tracé.
      */
-    public void drawCartes(Canvas canvas, Cartes cartes, float x, float y ) {
+    public void AffichageCartes(Canvas canvas, Cartes cartes, float x, float y ) {
         float cornerWidth = colonneWidth / 10f;
 
         RectF rectF = new RectF( x, y, x + colonneWidth, y + colonneHeight );
@@ -176,27 +208,27 @@ public class GameView extends View implements GestureDetector.OnGestureListener 
 
         if ( cartes.isVisible() ) {
             Bitmap image;
-            Bitmap imageLittle;
+            Bitmap imageMini;
             int color;
             switch (cartes.getType()) {
                 case CARREAU:
                     image = imgCarreau;
-                    imageLittle = imgCarreauLittle;
+                    imageMini = imgCarreauMini;
                     color = 0xff_e6_14_08;
                     break;
                 case COEUR:
                     image = imgCoeur;
-                    imageLittle = imgCoeurLittle;
+                    imageMini = imgCoeurMini;
                     color = 0xff_e6_14_08;
                     break;
                 case PIQUE:
                     image = imgPique;
-                    imageLittle = imgPiqueLittle;
+                    imageMini = imgPiqueMini;
                     color = 0xff_00_00_00;
                     break;
                 default:
                     image = imgTreffle;
-                    imageLittle = imgTreffleLittle;
+                    imageMini = imgTreffleMini;
                     color = 0xff_00_00_00;
             }
 
@@ -211,7 +243,7 @@ public class GameView extends View implements GestureDetector.OnGestureListener 
                 canvas.drawText( "1", x + colonneWidth * 0.1f, y + colonneHeight * 0.32f, paint);
                 canvas.drawText( "0", x + colonneWidth * 0.3f, y + colonneHeight * 0.32f, paint);
             }
-            canvas.drawBitmap( imageLittle, x + colonneWidth*0.9f - imageLittle.getWidth(),
+            canvas.drawBitmap( imageMini, x + colonneWidth*0.9f - imageMini.getWidth(),
                     y + colonneHeight * 0.1f, paint );
             canvas.drawBitmap( image, x + (colonneWidth - image.getWidth())/ 2f,
                     y + (colonneHeight*0.9f - image.getHeight()) , paint );
@@ -256,37 +288,43 @@ public class GameView extends View implements GestureDetector.OnGestureListener 
         paint.setStrokeWidth(1);
         canvas.drawText( "SCORE :", (int) (widthDiv10 * 0.5), (int) (heightDiv10 * 1.3), paint );
 
-        paint.setTextAlign( Paint.Align.RIGHT );
-        canvas.drawText( "TEMPS : ", (int) (widthDiv10 * 9.5), (int) (heightDiv10 * 1.3), paint );
-        // --- Draw the fourth stacks ---
-        paint.setStrokeWidth( getWidth() / 200f );
+        paint.setColor(CouleurPolice);
+        paint.setTextAlign(Paint.Align.RIGHT);
+        paint.setTextSize(getWidth() / 20f);
+
+        int secondes = (int) (tempsEcoule / 1000) % 60;
+        int minutes = (int) (tempsEcoule / 60000);
+        String texteTemps = String.format("%02d:%02d", minutes, secondes);
+
+        canvas.drawText("Temps : " + texteTemps, widthDiv10 * 9.5f, (int) (heightDiv10 * 1.3), paint);
+
 
         for (int i = 0; i < Game.PILE_COUNT; i++) {
             Game.Pile pile = game.pile[i];
-            rectF = computeStackRect( i );
-            drawCartes( canvas, pile.isEmpty() ? null : pile.lastElement(), rectF.left, rectF.top );
+            rectF = calcRectPile( i );
+            AffichageCartes( canvas, pile.isEmpty() ? null : pile.lastElement(), rectF.left, rectF.top );
         }
 
         // --- Draw the pioche ---
-        rectF = computeReturnedPiocheRect();
-        drawCartes( canvas, game.Piocheretourne.isEmpty() ? null : game.Piocheretourne.lastElement(),
+        rectF = calcRectPiocheRet();
+        AffichageCartes( canvas, game.Piocheretourne.isEmpty() ? null : game.Piocheretourne.lastElement(),
                 rectF.left, rectF.top );
 
-        rectF = computePiocheRect();
-        drawCartes(canvas, game.pioche.isEmpty() ? null : game.pioche.lastElement(), rectF.left, rectF.top);
+        rectF = calcRectPiocheVis();
+        AffichageCartes(canvas, game.pioche.isEmpty() ? null : game.pioche.lastElement(), rectF.left, rectF.top);
 
         // --- Draw the seven decks ---
         for ( int i = 0; i < Game.COLONNE_COUNT; i++ ) {
             Game.Colonne colonne = game.colonne[i];
 
             if ( colonne.isEmpty() ) {
-                rectF = computeDeckRect(i, 0);
-                drawCartes( canvas, null, rectF.left, rectF.top );
+                rectF = calcRectColonne(i, 0);
+                AffichageCartes( canvas, null, rectF.left, rectF.top );
             } else {
                 for ( int cartesIndex = 0; cartesIndex < colonne.size(); cartesIndex++ ) {
                     Cartes cartes = colonne.get(cartesIndex);
-                    rectF = computeDeckRect(i, cartesIndex);
-                    drawCartes(canvas, cartes, rectF.left, rectF.top);
+                    rectF = calcRectColonne(i, cartesIndex);
+                    AffichageCartes(canvas, cartes, rectF.left, rectF.top);
                 }
             }
 
@@ -303,7 +341,7 @@ public class GameView extends View implements GestureDetector.OnGestureListener 
         RectF rect;
 
         // --- Un tap sur les cartes non retournées de la pioche ---
-        rect = computePiocheRect();
+        rect = calcRectPiocheVis();
         if ( rect.contains( e.getX(), e.getY() ) ) {
             if ( ! game.pioche.isEmpty() ) {
                 Cartes cartes = game.pioche.remove(0);
@@ -319,9 +357,9 @@ public class GameView extends View implements GestureDetector.OnGestureListener 
         }
 
         // --- Un tap sur les cartes retournées de la pioche ---
-        rect = computeReturnedPiocheRect();
+        rect = calcRectPiocheRet();
         if ( rect.contains( e.getX(), e.getY() ) && ! game.Piocheretourne.isEmpty() ) {
-            final int pileIndex = game.MoveCartesPile( game.Piocheretourne.lastElement() );
+            final int pileIndex = game.CartesVersPile( game.Piocheretourne.lastElement() );
             if ( pileIndex > -1 ) {
                 Cartes selectedCard = game.Piocheretourne.remove(game.Piocheretourne.size() - 1);
                 game.pile[pileIndex].add( selectedCard );
@@ -329,7 +367,7 @@ public class GameView extends View implements GestureDetector.OnGestureListener 
                 return true;
             }
 
-            final int colonneIndex = game.MoveCartesColonne( game.Piocheretourne.lastElement() );
+            final int colonneIndex = game.CartesVersColonne( game.Piocheretourne.lastElement() );
             if ( colonneIndex > -1 ) {
                 Cartes selectedCard = game.Piocheretourne.remove( game.Piocheretourne.size() - 1 );
                 game.colonne[colonneIndex].add( selectedCard );
@@ -343,7 +381,7 @@ public class GameView extends View implements GestureDetector.OnGestureListener 
             final Game.Colonne colonne = game.colonne[colonneIndex];
             if ( ! colonne.isEmpty() ) {
                 for( int i=colonne.size()-1; i>=0; i-- ) {
-                    rect = computeDeckRect(colonneIndex, i);
+                    rect = calcRectColonne(colonneIndex, i);
                     if ( rect.contains(e.getX(), e.getY()) ) {
                         // Click sur carte non retournée de la deck => on sort
                         Cartes currentCard = colonne.get(i);
@@ -351,7 +389,7 @@ public class GameView extends View implements GestureDetector.OnGestureListener 
 
                         // Peut-on déplacer la carte du sommet de la colonne vers une pile ?
                         if ( i == colonne.size() - 1 ) {       // On vérifie de bien être sur le sommet
-                            int pileIndex = game.MoveCartesPile(currentCard);
+                            int pileIndex = game.CartesVersPile(currentCard);
                             if (pileIndex > -1) {
                                 Cartes selectedCard = colonne.remove(colonne.size() - 1);
                                 if ( ! colonne.isEmpty() ) colonne.lastElement().setVisible(true);
@@ -362,7 +400,7 @@ public class GameView extends View implements GestureDetector.OnGestureListener 
                         }
 
                         // Peut-on déplacer la carte de la colonne vers une autre colonne ?
-                        final int colonneIndex2 = game.MoveCartesColonne( currentCard );
+                        final int colonneIndex2 = game.CartesVersColonne( currentCard );
                         if (colonneIndex2 > -1) {
                             if ( i == colonne.size() - 1 ) {
                                 // On déplace qu'une carte

@@ -53,7 +53,7 @@ public class Game implements Serializable {
     }
 
     // Méthode pour vérifier si une carte peut être déplacée dans une pile
-    public int MoveCartesPile(Cartes cartes) {
+    public int CartesVersPile(Cartes cartes) {
         // Si une stack est vide et que la carte est un as
         if (cartes.getValeur() == 1) {
             for (int pileIndex = 0; pileIndex < PILE_COUNT; pileIndex++) {
@@ -77,7 +77,7 @@ public class Game implements Serializable {
     }
 
     // Méthode pour vérifier si une carte peut être déplacée dans une colonne
-    public int MoveCartesColonne(Cartes cartes) {
+    public int CartesVersColonne(Cartes cartes) {
         // Si la carte est un roi et qu'un colonne est vide, alors OK
         if (cartes.getValeur() == 13) {
             for (int colonneIndex = 0; colonneIndex < COLONNE_COUNT; colonneIndex++) {
@@ -98,15 +98,17 @@ public class Game implements Serializable {
     }
 
     // Méthode pour vérifier si la partie est terminée
-    public boolean isFinish() {
+    public boolean partieFinie() {
         return !pile[0].isEmpty() && pile[0].lastElement().getValeur() == 13 &&
                 !pile[1].isEmpty() && pile[1].lastElement().getValeur() == 13 &&
                 !pile[2].isEmpty() && pile[2].lastElement().getValeur() == 13 &&
                 !pile[3].isEmpty() && pile[3].lastElement().getValeur() == 13;
+
     }
 
+
     // Méthode pour vérifier si toutes les cartes sont retournées
-    public boolean allIsReturned() {
+    public boolean allRetourne() {
         for (int i = 0; i < COLONNE_COUNT; i++) {
             Colonne colonne = this.colonne[i];
             if (colonne.size() > 0 && !colonne.firstElement().isVisible()) return false;
