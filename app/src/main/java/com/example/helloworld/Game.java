@@ -5,66 +5,72 @@ import java.util.Vector;
 
 public class Game implements Serializable {
 
+    // Classe interne pour représenter une pile (Stack pour les piles des cartes terminées)
     public static class Pile extends java.util.Stack<Cartes> {}
+
+    // Classe interne pour représenter une colonne (Stack pour les colonnes de cartes du jeu)
     public static class Colonne extends java.util.Stack<Cartes> {}
 
+    // Constantes pour le nombre de piles et de colonnes dans le jeu
     public static final int PILE_COUNT = 4;
     public static final int COLONNE_COUNT = 7;
 
+    // Attributs pour les piles, colonnes, et les vecteurs de cartes
     public Pile[] pile = new Pile[PILE_COUNT];
     public Colonne[] colonne = new Colonne[COLONNE_COUNT];
-    public Vector<Cartes> pioche = new Vector<>();
-    public Vector<Cartes> Piocheretourne = new Vector<>();
+    public Vector<Cartes> pioche = new Vector<>(); // Contient toutes les cartes mélangées
+    public Vector<Cartes> Piocheretourne = new Vector<>(); // Cartes retournées après pioche
 
+    // Constructeur pour initialiser le jeu
     public Game() {
 
-        // Step 1 - Toutes les cartes sont instanciées
+        // Étape 1 - Création de toutes les cartes
         for (int i = 1; i <= 13; i++) {
-            pioche.add(new Cartes(Cartes.CartesType.CARREAU, i));
-            pioche.add(new Cartes(Cartes.CartesType.COEUR, i));
-            pioche.add(new Cartes(Cartes.CartesType.PIQUE, i));
-            pioche.add(new Cartes(Cartes.CartesType.TREFLE, i));
+            pioche.add(new Cartes(Cartes.CartesType.CARREAU, i)); // Cartes de type carreau
+            pioche.add(new Cartes(Cartes.CartesType.COEUR, i));   // Cartes de type cœur
+            pioche.add(new Cartes(Cartes.CartesType.PIQUE, i));   // Cartes de type pique
+            pioche.add(new Cartes(Cartes.CartesType.TREFLE, i));  // Cartes de type trèfle
         }
 
-        // Step 2 - On mélange les cartes
+        // Étape 2 - Mélange des cartes (200 échanges aléatoires)
         for (int round = 0; round < 200; round++) {
             int position = (int) (Math.random() * pioche.size());
-            Cartes removedCartes = pioche.elementAt(position);
-            pioche.removeElementAt(position);
-            pioche.add(removedCartes);
+            Cartes removedCartes = pioche.elementAt(position); // Choix d'une carte aléatoire
+            pioche.removeElementAt(position);                 // Suppression de la carte
+            pioche.add(removedCartes);                        // Ajout de la carte à la fin
         }
 
-        // Step 3 - On crée les sept colonnes avec des cartes tirées aléatoirement dans la pioche
+        // Étape 3 - Création des colonnes de cartes
         for (int colonneIndex = 0; colonneIndex < COLONNE_COUNT; colonneIndex++) {
-            colonne[colonneIndex] = new Colonne();
+            colonne[colonneIndex] = new Colonne(); // Initialisation d'une colonne
             for (int cartesIndex = 0; cartesIndex < colonneIndex + 1; cartesIndex++) {
                 int position = (int) (Math.random() * pioche.size());
-                Cartes removedCartes = pioche.elementAt(position);
-                pioche.removeElementAt(position);
-                colonne[colonneIndex].push(removedCartes);
-                if (cartesIndex == colonneIndex) removedCartes.setVisible(true);
+                Cartes removedCartes = pioche.elementAt(position); // Pioche d'une carte aléatoire
+                pioche.removeElementAt(position);                 // Suppression de la carte de la pioche
+                colonne[colonneIndex].push(removedCartes);        // Ajout de la carte dans la colonne
+                if (cartesIndex == colonneIndex)
+                    removedCartes.setVisible(true); // La dernière carte de chaque colonne est visible
             }
         }
 
-        // Step 4 - On initialise les quatre stacks.
+        // Étape 4 - Initialisation des piles
         for (int colonneIndex = 0; colonneIndex < PILE_COUNT; colonneIndex++) {
-            pile[colonneIndex] = new Pile();
+            pile[colonneIndex] = new Pile(); // Chaque pile commence vide
         }
     }
 
     // Méthode pour vérifier si une carte peut être déplacée dans une pile
     public int CartesVersPile(Cartes cartes) {
-        // Si une stack est vide et que la carte est un as
+        // Si la carte est un As, elle peut aller dans une pile vide
         if (cartes.getValeur() == 1) {
             for (int pileIndex = 0; pileIndex < PILE_COUNT; pileIndex++) {
                 if (this.pile[pileIndex].isEmpty()) {
-                    return pileIndex;
+                    return pileIndex; // Retourne l'index de la pile vide
                 }
             }
         }
 
-        // Si ce n'est pas un as, peut-on empiler la carte sur une carte de
-        // valeur inférieure dans l'une des piles.
+        // Sinon, vérifie si elle peut être empilée sur une carte de la même couleur et de valeur immédiatement inférieure
         for (int pileIndex = 0; pileIndex < PILE_COUNT; pileIndex++) {
             Pile pile = this.pile[pileIndex];
             if (!pile.isEmpty()) {
@@ -73,19 +79,19 @@ public class Game implements Serializable {
             }
         }
 
-        return -1;
+        return -1; // Retourne -1 si la carte ne peut être placée dans aucune pile
     }
 
     // Méthode pour vérifier si une carte peut être déplacée dans une colonne
     public int CartesVersColonne(Cartes cartes) {
-        // Si la carte est un roi et qu'un colonne est vide, alors OK
+        // Si la carte est un Roi, elle peut aller dans une colonne vide
         if (cartes.getValeur() == 13) {
             for (int colonneIndex = 0; colonneIndex < COLONNE_COUNT; colonneIndex++) {
                 if (this.colonne[colonneIndex].isEmpty()) return colonneIndex;
             }
         }
 
-        // Est-ce que la carte peut être placée sur une colonne ?
+        // Vérifie si la carte peut être placée sur une carte d'une autre couleur et de valeur immédiatement supérieure
         for (int colonneIndex = 0; colonneIndex < COLONNE_COUNT; colonneIndex++) {
             Colonne colonne = this.colonne[colonneIndex];
             if (colonne.size() > 0) {
@@ -94,18 +100,16 @@ public class Game implements Serializable {
             }
         }
 
-        return -1;
+        return -1; // Retourne -1 si la carte ne peut être placée dans aucune colonne
     }
 
-    // Méthode pour vérifier si la partie est terminée
+    // Méthode pour vérifier si la partie est terminée (toutes les piles sont complètes avec des Rois)
     public boolean partieFinie() {
         return !pile[0].isEmpty() && pile[0].lastElement().getValeur() == 13 &&
                 !pile[1].isEmpty() && pile[1].lastElement().getValeur() == 13 &&
                 !pile[2].isEmpty() && pile[2].lastElement().getValeur() == 13 &&
                 !pile[3].isEmpty() && pile[3].lastElement().getValeur() == 13;
-
     }
-
 
     // Méthode pour vérifier si toutes les cartes sont retournées
     public boolean allRetourne() {
@@ -113,6 +117,6 @@ public class Game implements Serializable {
             Colonne colonne = this.colonne[i];
             if (colonne.size() > 0 && !colonne.firstElement().isVisible()) return false;
         }
-        return true;
+        return true; // Retourne true si toutes les cartes sont retournées
     }
 }
