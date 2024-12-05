@@ -1,12 +1,15 @@
 package com.example.helloworld;
 
 import java.io.Serializable;
+import java.util.Stack;
 import java.util.Vector;
 
 public class Game implements Serializable {
 
     // Classe interne pour représenter une pile (Stack pour les piles des cartes terminées)
     public static class Pile extends java.util.Stack<Cartes> {}
+
+    public Stack<Mouvement> historiqueMouvements = new Stack<>();
 
     // Classe interne pour représenter une colonne (Stack pour les colonnes de cartes du jeu)
     public static class Colonne extends java.util.Stack<Cartes> {}
@@ -118,5 +121,21 @@ public class Game implements Serializable {
             if (colonne.size() > 0 && !colonne.firstElement().isVisible()) return false;
         }
         return true; // Retourne true si toutes les cartes sont retournées
+    }
+
+    public static class Mouvement {
+        public Cartes carte;
+        public int typeSource; // 0: Pioche, 1: Colonne, 2: Pile
+        public int indexSource;
+        public int typeDestination;
+        public int indexDestination;
+
+        public Mouvement(Cartes carte, int typeSource, int indexSource, int typeDestination, int indexDestination) {
+            this.carte = carte;
+            this.typeSource = typeSource;
+            this.indexSource = indexSource;
+            this.typeDestination = typeDestination;
+            this.indexDestination = indexDestination;
+        }
     }
 }

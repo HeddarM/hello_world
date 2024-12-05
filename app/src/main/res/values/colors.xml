@@ -7,12 +7,6 @@
     <color name="teal_700">#FF018786</color>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
-    <!-- Pour les couleurs utilisées par la barre de notification -->
-    <color name="colorPrimary">#000000</color>
-    <color name="colorPrimaryDark">#000000</color>
-    <color name="colorAccent">#e61408</color>
-
-    <!-- Les couleurs utilisées pourr l'application -->
     <color name="headerForegroundColor">#FFD700</color>
     <color name="CouleurFond">#87CEEB</color>
     <color name="CouleurPolice">#FFD700</color>
